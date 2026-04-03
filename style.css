@@ -287,6 +287,57 @@ body {
   color: #b88ad8;
 }
 
+/* Type badges */
+.type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.type-badge.workout {
+  background: #3a2e1e;
+  color: #e0a850;
+}
+
+.type-badge.stretch {
+  background: #1e3a3a;
+  color: #50c8b0;
+}
+
+/* Body part badges */
+.bodypart-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.bodypart-badge.legs {
+  background: #2e2a3e;
+  color: #a088d8;
+}
+
+.bodypart-badge.upper {
+  background: #3e2a2a;
+  color: #d88888;
+}
+
+.bodypart-badge.core {
+  background: #2a3e2e;
+  color: #88c8a0;
+}
+
 /* Select styling */
 .modal-form select {
   display: block;

@@ -133,6 +133,26 @@ function frequencyLabel(restDays) {
   return `Every ${restDays + 1} days`;
 }
 
+function typeLabel(type) {
+  const labels = { workout: 'Workout', stretch: 'Stretch' };
+  return labels[type] || '';
+}
+
+function bodypartLabel(bp) {
+  const labels = { legs: 'Legs', upper: 'Upper Body', core: 'Core' };
+  return labels[bp] || '';
+}
+
+function typeBadgeHtml(type) {
+  if (!type) return '';
+  return `<span class="type-badge ${type}">${typeLabel(type)}</span>`;
+}
+
+function bodypartBadgeHtml(bp) {
+  if (!bp) return '';
+  return `<span class="bodypart-badge ${bp}">${bodypartLabel(bp)}</span>`;
+}
+
 // Urgency score: higher = more overdue relative to cycle length
 function urgencyScore(exercise) {
   if (!exercise.lastCompleted) return Infinity;
@@ -183,7 +203,7 @@ function renderDueList() {
       <div class="exercise-card ${overdueClass}" data-id="${ex.id}">
         <div class="play-icon" onclick="playVideo('${ex.id}')">&#9654;</div>
         <div class="info" onclick="playVideo('${ex.id}')">
-          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span></div>
+          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${typeBadgeHtml(ex.exerciseType)}${bodypartBadgeHtml(ex.bodyPart)}</div>
           <div class="detail">${detail}</div>
         </div>
         <button class="check-btn" onclick="markDone('${ex.id}', this)" title="Mark as done">&#10003;</button>
@@ -229,7 +249,7 @@ function renderExerciseList() {
       <div class="exercise-card ${pausedClass}" data-id="${ex.id}">
         <div class="play-icon" onclick="playVideo('${ex.id}')">&#9654;</div>
         <div class="info" onclick="playVideo('${ex.id}')">
-          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${pausedBadge}</div>
+          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${typeBadgeHtml(ex.exerciseType)}${bodypartBadgeHtml(ex.bodyPart)}${pausedBadge}</div>
           <div class="detail">${frequencyLabel(ex.restDays)} &middot; <span style="${statusColor}">${statusText}</span></div>
         </div>
         <button class="edit-icon" onclick="openEditExercise('${ex.id}')" title="Edit">&#9998;</button>
@@ -256,7 +276,7 @@ function renderPlan() {
   lines.push('Generated: ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
   lines.push('');
 
-  function addExerciseToplan(ex, i) {
+  function formatExerciseLine(ex, i) {
     const freq = ex.restDays === 0
       ? 'Daily'
       : ex.restDays === 1
@@ -276,19 +296,46 @@ function renderPlan() {
     lines.push('');
   }
 
+  // Group active exercises by body part, then by type
+  const bodyPartOrder = ['legs', 'upper', 'core', ''];
+  const bodyPartNames = { legs: 'LEGS', upper: 'UPPER BODY', core: 'CORE', '': 'UNASSIGNED' };
+  const typeOrder = ['workout', 'stretch', ''];
+  const typeNames = { workout: 'Workouts', stretch: 'Stretches', '': 'Unset type' };
+
   lines.push('ACTIVE EXERCISES');
-  lines.push('-'.repeat(35));
+  lines.push('='.repeat(35));
+
   if (activeExercises.length === 0) {
     lines.push('(none)');
     lines.push('');
   } else {
-    activeExercises.forEach((ex, i) => addExerciseToplan(ex, i));
+    let counter = 0;
+    for (const bp of bodyPartOrder) {
+      const bpExercises = activeExercises.filter(e => (e.bodyPart || '') === bp);
+      if (bpExercises.length === 0) continue;
+
+      lines.push('');
+      lines.push(`${bodyPartNames[bp]}`);
+      lines.push('-'.repeat(35));
+
+      for (const t of typeOrder) {
+        const group = bpExercises.filter(e => (e.exerciseType || '') === t);
+        if (group.length === 0) continue;
+
+        lines.push(`  ${typeNames[t]}`);
+        group.forEach(ex => {
+          formatExerciseLine(ex, counter);
+          counter++;
+        });
+      }
+    }
   }
 
   if (pausedExercises.length > 0) {
+    lines.push('');
     lines.push('PAUSED (OUT OF ROTATION)');
-    lines.push('-'.repeat(35));
-    pausedExercises.forEach((ex, i) => addExerciseToplan(ex, i));
+    lines.push('='.repeat(35));
+    pausedExercises.forEach((ex, i) => formatExerciseLine(ex, i));
   }
 
   lines.push('-'.repeat(35));
@@ -354,6 +401,8 @@ function openAddExercise() {
   document.getElementById('exercise-video').value = '';
   document.getElementById('exercise-rest').value = '2';
   document.getElementById('exercise-location').value = 'both';
+  document.getElementById('exercise-type').value = '';
+  document.getElementById('exercise-bodypart').value = '';
   document.getElementById('exercise-paused').checked = false;
   document.getElementById('current-video-name').textContent = '';
   document.getElementById('delete-exercise-btn').style.display = 'none';
@@ -370,6 +419,8 @@ function openEditExercise(id) {
   document.getElementById('exercise-video').value = '';
   document.getElementById('exercise-rest').value = ex.restDays;
   document.getElementById('exercise-location').value = ex.location || 'both';
+  document.getElementById('exercise-type').value = ex.exerciseType || '';
+  document.getElementById('exercise-bodypart').value = ex.bodyPart || '';
   document.getElementById('exercise-paused').checked = !!ex.paused;
   document.getElementById('current-video-name').textContent = ex.videoName ? `Current: ${ex.videoName}` : '';
   document.getElementById('delete-exercise-btn').style.display = 'block';
@@ -388,6 +439,8 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
   const name = document.getElementById('exercise-name').value.trim();
   const restDays = parseInt(document.getElementById('exercise-rest').value) || 0;
   const location = document.getElementById('exercise-location').value;
+  const exerciseType = document.getElementById('exercise-type').value;
+  const bodyPart = document.getElementById('exercise-bodypart').value;
   const paused = document.getElementById('exercise-paused').checked;
   const fileInput = document.getElementById('exercise-video');
 
@@ -403,6 +456,8 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
     exercise.name = name;
     exercise.restDays = restDays;
     exercise.location = location;
+    exercise.exerciseType = exerciseType;
+    exercise.bodyPart = bodyPart;
     exercise.paused = paused;
   } else {
     exercise = {
@@ -410,6 +465,8 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
       name: name,
       restDays: restDays,
       location: location,
+      exerciseType: exerciseType,
+      bodyPart: bodyPart,
       paused: paused,
       lastCompleted: null,
       videoBlob: null,
