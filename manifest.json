@@ -1,0 +1,17 @@
+{
+  "name": "My Physio Workouts",
+  "short_name": "My Physio",
+  "description": "Personal physiotherapy exercise tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#007aff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

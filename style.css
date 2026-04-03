@@ -1,0 +1,458 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --primary: #007aff;
+  --primary-dark: #005ecb;
+  --danger: #ff3b30;
+  --text: #1c1c1e;
+  --text-secondary: #8e8e93;
+  --border: #e5e5ea;
+  --success: #34c759;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-top: calc(var(--safe-top) + 52px);
+  padding-bottom: calc(var(--safe-bottom) + 16px);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Tab Bar */
+.tab-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding-top: var(--safe-top);
+  z-index: 100;
+}
+
+.tab {
+  flex: 1;
+  padding: 14px 8px;
+  border: none;
+  background: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+/* Pages */
+.page {
+  display: none;
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page.active {
+  display: block;
+}
+
+.page h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+}
+
+.btn-primary:active {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-cancel {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.btn-delete {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--danger);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* Exercise Cards */
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.exercise-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.exercise-card:active {
+  transform: scale(0.98);
+}
+
+.exercise-card .play-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.exercise-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-card .info .name {
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exercise-card .info .detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.exercise-card .check-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--success);
+  background: none;
+  color: var(--success);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.exercise-card .check-btn:active,
+.exercise-card .check-btn.checked {
+  background: var(--success);
+  color: white;
+}
+
+.exercise-card .edit-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Overdue indicator */
+.exercise-card.overdue .detail {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Location filter */
+.location-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Location badge */
+.location-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.location-badge.home {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.location-badge.gym {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.location-badge.both {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* Select styling */
+.modal-form select {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 17px;
+  margin-top: 6px;
+  background: var(--bg);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-top: 40px;
+}
+
+/* Modals */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+  padding-bottom: calc(24px + var(--safe-bottom));
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-close {
+  float: right;
+  border: none;
+  background: var(--bg);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-form h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.modal-form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modal-form input[type="text"],
+.modal-form input[type="number"] {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 17px;
+  margin-top: 6px;
+  background: var(--bg);
+  -webkit-appearance: none;
+}
+
+.modal-form input[type="file"] {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.hint {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-top: 4px;
+}
+
+.current-video {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--primary);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-top: 4px;
+}
+
+.modal-actions {
+  margin-top: 24px;
+}
+
+/* Video modal */
+#video-modal .modal-content {
+  border-radius: 20px 20px 0 0;
+  padding: 16px;
+  background: #000;
+}
+
+#video-player {
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+}
+
+#video-modal .modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+
+/* Plan tab */
+.plan-description {
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.plan-output {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  white-space: pre-wrap;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  min-height: 100px;
+  -webkit-user-select: text;
+  user-select: text;
+}
