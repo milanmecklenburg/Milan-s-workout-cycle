@@ -618,6 +618,67 @@ document.getElementById('share-plan-btn').addEventListener('click', () => {
   }
 });
 
+// ---- Data Export / Import ----
+document.getElementById('export-btn').addEventListener('click', () => {
+  const exportData = exercises.map(ex => {
+    const { videoBlob, ...rest } = ex;
+    return rest;
+  });
+  const json = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `workout-cycle-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const importedData = JSON.parse(text);
+
+    if (!Array.isArray(importedData)) {
+      alert('Invalid backup file.');
+      return;
+    }
+
+    if (!confirm(`Import ${importedData.length} exercises? This will merge with your existing data (existing exercises with the same ID will be updated).`)) {
+      return;
+    }
+
+    for (const ex of importedData) {
+      const existing = exercises.find(e => e.id === ex.id);
+      if (existing) {
+        // Preserve video blob from existing, update everything else
+        Object.assign(existing, ex, { videoBlob: existing.videoBlob });
+        await dbPut('exercises', existing);
+      } else {
+        ex.videoBlob = null;
+        exercises.push(ex);
+        await dbPut('exercises', ex);
+      }
+    }
+
+    renderDueList();
+    renderExerciseList();
+    renderPlan();
+    alert('Import complete!');
+  } catch (err) {
+    alert('Error reading backup file: ' + err.message);
+  }
+
+  e.target.value = '';
+});
+
 // ---- Utility ----
 function escapeHtml(str) {
   const div = document.createElement('div');

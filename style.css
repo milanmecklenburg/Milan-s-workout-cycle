@@ -616,3 +616,20 @@ body {
   -webkit-user-select: text;
   user-select: text;
 }
+
+.data-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.data-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.data-section .hint {
+  display: block;
+  margin-top: 8px;
+}
