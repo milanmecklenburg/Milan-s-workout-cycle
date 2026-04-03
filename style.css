@@ -7,8 +7,9 @@
 :root {
   --bg: #1a1a1e;
   --card: #2c2c30;
-  --primary: #d4a44a;
-  --primary-dark: #b8892e;
+  --primary: #f0d078;
+  --primary-dark: #d4b45c;
+  --on-primary: #2a2000;
   --danger: #ff6b6b;
   --text: #f0ece4;
   --text-secondary: #9a9690;
@@ -87,7 +88,7 @@ body {
   border: none;
   border-radius: var(--radius);
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -162,7 +163,7 @@ body {
   height: 44px;
   border-radius: 50%;
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,7 +255,7 @@ body {
 
 .filter-btn.active {
   background: var(--primary);
-  color: white;
+  color: var(--on-primary);
   border-color: var(--primary);
 }
 
