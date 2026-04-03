@@ -5,16 +5,16 @@
 }
 
 :root {
-  --bg: #f5f5f7;
-  --card: #ffffff;
-  --primary: #007aff;
-  --primary-dark: #005ecb;
-  --danger: #ff3b30;
-  --text: #1c1c1e;
-  --text-secondary: #8e8e93;
-  --border: #e5e5ea;
-  --success: #34c759;
-  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --bg: #1a1a1e;
+  --card: #2c2c30;
+  --primary: #d4a44a;
+  --primary-dark: #b8892e;
+  --danger: #ff6b6b;
+  --text: #f0ece4;
+  --text-secondary: #9a9690;
+  --border: #3a3a3e;
+  --success: #7ec87e;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
   --radius: 12px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -272,18 +272,18 @@ body {
 }
 
 .location-badge.home {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: #2e4a30;
+  color: #7ec87e;
 }
 
 .location-badge.gym {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: #2a3a4e;
+  color: #6eaadc;
 }
 
 .location-badge.both {
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: #3e2e4a;
+  color: #b88ad8;
 }
 
 /* Select styling */
@@ -319,7 +319,7 @@ body {
 .toggle-switch {
   width: 51px;
   height: 31px;
-  background: #e5e5ea;
+  background: #4a4a4e;
   border-radius: 16px;
   position: relative;
   flex-shrink: 0;
@@ -363,8 +363,8 @@ body {
   letter-spacing: 0.3px;
   vertical-align: middle;
   margin-left: 4px;
-  background: #fee2e2;
-  color: #991b1b;
+  background: #4a2a2a;
+  color: #ff6b6b;
 }
 
 /* Empty state */

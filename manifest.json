@@ -4,8 +4,8 @@
   "description": "Personal physiotherapy exercise tracker",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f5f7",
-  "theme_color": "#007aff",
+  "background_color": "#1a1a1e",
+  "theme_color": "#d4a44a",
   "orientation": "portrait",
   "icons": [
     {
