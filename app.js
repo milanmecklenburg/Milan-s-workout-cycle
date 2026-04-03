@@ -1,5 +1,5 @@
 // ==========================================
-// My Physio Workouts - PWA App
+// Workout Cycle - PWA App
 // ==========================================
 
 const DB_NAME = 'physio-workouts';

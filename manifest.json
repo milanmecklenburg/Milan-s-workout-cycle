@@ -1,6 +1,6 @@
 {
-  "name": "My Physio Workouts",
-  "short_name": "My Physio",
+  "name": "Workout Cycle",
+  "short_name": "Workout Cycle",
   "description": "Personal physiotherapy exercise tracker",
   "start_url": "./index.html",
   "display": "standalone",
