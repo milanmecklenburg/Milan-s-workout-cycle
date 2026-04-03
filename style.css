@@ -348,6 +348,7 @@ body {
   font-size: 17px;
   margin-top: 6px;
   background: var(--bg);
+  color: var(--text);
   -webkit-appearance: none;
   appearance: none;
 }
@@ -501,6 +502,7 @@ body {
   font-size: 17px;
   margin-top: 6px;
   background: var(--bg);
+  color: var(--text);
   -webkit-appearance: none;
 }
 
