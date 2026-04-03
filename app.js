@@ -134,7 +134,7 @@ function frequencyLabel(restDays) {
 }
 
 function typeLabel(type) {
-  const labels = { workout: 'Workout', stretch: 'Stretch' };
+  const labels = { workout: 'Workout', stretch: 'Cooldown' };
   return labels[type] || '';
 }
 
@@ -300,7 +300,7 @@ function renderPlan() {
   const bodyPartOrder = ['legs', 'upper', 'core', ''];
   const bodyPartNames = { legs: 'LEGS', upper: 'UPPER BODY', core: 'CORE', '': 'UNASSIGNED' };
   const typeOrder = ['workout', 'stretch', ''];
-  const typeNames = { workout: 'Workouts', stretch: 'Stretches', '': 'Unset type' };
+  const typeNames = { workout: 'Workouts', stretch: 'Cooldown', '': 'Unset timing' };
 
   lines.push('ACTIVE EXERCISES');
   lines.push('='.repeat(35));
