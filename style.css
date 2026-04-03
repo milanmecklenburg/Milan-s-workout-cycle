@@ -300,6 +300,73 @@ body {
   appearance: none;
 }
 
+/* Toggle switch */
+.toggle-label {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  text-transform: none !important;
+  font-size: 17px !important;
+  font-weight: 500 !important;
+  color: var(--text) !important;
+  letter-spacing: 0 !important;
+}
+
+.toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-switch {
+  width: 51px;
+  height: 31px;
+  background: #e5e5ea;
+  border-radius: 16px;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 27px;
+  height: 27px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-label input:checked + .toggle-switch {
+  background: var(--primary);
+}
+
+.toggle-label input:checked + .toggle-switch::after {
+  transform: translateX(20px);
+}
+
+/* Paused exercise card */
+.exercise-card.paused {
+  opacity: 0.5;
+}
+
+.paused-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  margin-left: 4px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;

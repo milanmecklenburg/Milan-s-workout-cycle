@@ -132,7 +132,7 @@ function renderDueList() {
   const container = document.getElementById('due-list');
   const emptyMsg = document.getElementById('all-done');
 
-  const dueExercises = exercises.filter(e => isDue(e) && matchesLocationFilter(e));
+  const dueExercises = exercises.filter(e => !e.paused && isDue(e) && matchesLocationFilter(e));
 
   if (dueExercises.length === 0) {
     container.innerHTML = '';
@@ -193,16 +193,29 @@ function renderExerciseList() {
 
   const sorted = [...exercises].sort((a, b) => a.name.localeCompare(b.name));
 
-  container.innerHTML = sorted.map(ex => {
-    const due = isDue(ex);
-    const statusText = due ? 'Due now' : `Due in ${daysUntilDue(ex)} day${daysUntilDue(ex) !== 1 ? 's' : ''}`;
-    const statusColor = due ? 'color: var(--success); font-weight: 600;' : '';
+  // Show active exercises first, then paused
+  const active = sorted.filter(e => !e.paused);
+  const paused = sorted.filter(e => e.paused);
+  const ordered = [...active, ...paused];
+
+  container.innerHTML = ordered.map(ex => {
+    const pausedClass = ex.paused ? 'paused' : '';
+    const pausedBadge = ex.paused ? '<span class="paused-badge">Paused</span>' : '';
+    let statusText, statusColor;
+    if (ex.paused) {
+      statusText = 'Out of rotation';
+      statusColor = 'color: var(--text-secondary);';
+    } else {
+      const due = isDue(ex);
+      statusText = due ? 'Due now' : `Due in ${daysUntilDue(ex)} day${daysUntilDue(ex) !== 1 ? 's' : ''}`;
+      statusColor = due ? 'color: var(--success); font-weight: 600;' : '';
+    }
     const loc = ex.location || 'both';
     return `
-      <div class="exercise-card" data-id="${ex.id}">
+      <div class="exercise-card ${pausedClass}" data-id="${ex.id}">
         <div class="play-icon" onclick="playVideo('${ex.id}')">&#9654;</div>
         <div class="info" onclick="playVideo('${ex.id}')">
-          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span></div>
+          <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${pausedBadge}</div>
           <div class="detail">Rest: ${ex.restDays} day${ex.restDays !== 1 ? 's' : ''} &middot; <span style="${statusColor}">${statusText}</span></div>
         </div>
         <button class="edit-icon" onclick="openEditExercise('${ex.id}')" title="Edit">&#9998;</button>
@@ -221,15 +234,15 @@ function renderPlan() {
   }
 
   const sorted = [...exercises].sort((a, b) => a.name.localeCompare(b.name));
+  const activeExercises = sorted.filter(e => !e.paused);
+  const pausedExercises = sorted.filter(e => e.paused);
   const lines = [];
 
   lines.push('MY PHYSIOTHERAPY WORKOUT PLAN');
   lines.push('Generated: ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
   lines.push('');
-  lines.push('EXERCISES');
-  lines.push('-'.repeat(35));
 
-  sorted.forEach((ex, i) => {
+  function addExerciseToplan(ex, i) {
     const freq = ex.restDays === 0
       ? 'Daily'
       : ex.restDays === 1
@@ -248,10 +261,25 @@ function renderPlan() {
       lines.push('   Last completed: Not yet');
     }
     lines.push('');
-  });
+  }
+
+  lines.push('ACTIVE EXERCISES');
+  lines.push('-'.repeat(35));
+  if (activeExercises.length === 0) {
+    lines.push('(none)');
+    lines.push('');
+  } else {
+    activeExercises.forEach((ex, i) => addExerciseToplan(ex, i));
+  }
+
+  if (pausedExercises.length > 0) {
+    lines.push('PAUSED (OUT OF ROTATION)');
+    lines.push('-'.repeat(35));
+    pausedExercises.forEach((ex, i) => addExerciseToplan(ex, i));
+  }
 
   lines.push('-'.repeat(35));
-  lines.push(`Total exercises: ${exercises.length}`);
+  lines.push(`Active: ${activeExercises.length} | Paused: ${pausedExercises.length} | Total: ${exercises.length}`);
 
   container.textContent = lines.join('\n');
 }
@@ -313,6 +341,7 @@ function openAddExercise() {
   document.getElementById('exercise-video').value = '';
   document.getElementById('exercise-rest').value = '2';
   document.getElementById('exercise-location').value = 'both';
+  document.getElementById('exercise-paused').checked = false;
   document.getElementById('current-video-name').textContent = '';
   document.getElementById('delete-exercise-btn').style.display = 'none';
   document.getElementById('exercise-modal').style.display = 'flex';
@@ -328,6 +357,7 @@ function openEditExercise(id) {
   document.getElementById('exercise-video').value = '';
   document.getElementById('exercise-rest').value = ex.restDays;
   document.getElementById('exercise-location').value = ex.location || 'both';
+  document.getElementById('exercise-paused').checked = !!ex.paused;
   document.getElementById('current-video-name').textContent = ex.videoName ? `Current: ${ex.videoName}` : '';
   document.getElementById('delete-exercise-btn').style.display = 'block';
   document.getElementById('exercise-modal').style.display = 'flex';
@@ -345,6 +375,7 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
   const name = document.getElementById('exercise-name').value.trim();
   const restDays = parseInt(document.getElementById('exercise-rest').value) || 0;
   const location = document.getElementById('exercise-location').value;
+  const paused = document.getElementById('exercise-paused').checked;
   const fileInput = document.getElementById('exercise-video');
 
   if (!name) {
@@ -359,12 +390,14 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
     exercise.name = name;
     exercise.restDays = restDays;
     exercise.location = location;
+    exercise.paused = paused;
   } else {
     exercise = {
       id: generateId(),
       name: name,
       restDays: restDays,
       location: location,
+      paused: paused,
       lastCompleted: null,
       videoBlob: null,
       videoName: null,
