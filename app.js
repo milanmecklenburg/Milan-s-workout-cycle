@@ -406,6 +406,7 @@ function openAddExercise() {
   document.getElementById('exercise-paused').checked = false;
   document.getElementById('current-video-name').textContent = '';
   document.getElementById('delete-exercise-btn').style.display = 'none';
+  hideModalVideoPreview();
   document.getElementById('exercise-modal').style.display = 'flex';
 }
 
@@ -424,11 +425,42 @@ function openEditExercise(id) {
   document.getElementById('exercise-paused').checked = !!ex.paused;
   document.getElementById('current-video-name').textContent = ex.videoName ? `Current: ${ex.videoName}` : '';
   document.getElementById('delete-exercise-btn').style.display = 'block';
+
+  // Show existing video preview
+  if (ex.videoBlob) {
+    showModalVideoPreview(URL.createObjectURL(ex.videoBlob));
+  } else {
+    hideModalVideoPreview();
+  }
+
   document.getElementById('exercise-modal').style.display = 'flex';
 }
 
+// Modal video preview
+function showModalVideoPreview(url) {
+  const preview = document.getElementById('modal-video-preview');
+  preview.src = url;
+  preview.style.display = 'block';
+}
+
+function hideModalVideoPreview() {
+  const preview = document.getElementById('modal-video-preview');
+  preview.pause();
+  preview.removeAttribute('src');
+  preview.load();
+  preview.style.display = 'none';
+}
+
+// Show preview when a new file is selected
+document.getElementById('exercise-video').addEventListener('change', (e) => {
+  if (e.target.files.length > 0) {
+    showModalVideoPreview(URL.createObjectURL(e.target.files[0]));
+  }
+});
+
 function closeExerciseModal() {
   document.getElementById('exercise-modal').style.display = 'none';
+  hideModalVideoPreview();
   editingId = null;
 }
 
