@@ -127,6 +127,20 @@ function locationLabel(loc) {
   return labels[loc] || 'Home & Gym';
 }
 
+function frequencyLabel(restDays) {
+  if (restDays === 0) return 'Daily';
+  if (restDays === 1) return 'Every other day';
+  return `Every ${restDays + 1} days`;
+}
+
+// Urgency score: higher = more overdue relative to cycle length
+function urgencyScore(exercise) {
+  if (!exercise.lastCompleted) return Infinity;
+  const days = daysSinceCompleted(exercise);
+  const cycleLength = exercise.restDays + 1;
+  return days / cycleLength;
+}
+
 // ---- Render: Due List (To Do tab) ----
 function renderDueList() {
   const container = document.getElementById('due-list');
@@ -142,12 +156,12 @@ function renderDueList() {
 
   emptyMsg.style.display = 'none';
 
-  // Sort: never-completed first, then by longest overdue
+  // Sort by urgency: days since last completed / cycle length (descending)
   dueExercises.sort((a, b) => {
-    if (!a.lastCompleted && b.lastCompleted) return -1;
-    if (a.lastCompleted && !b.lastCompleted) return 1;
-    if (!a.lastCompleted && !b.lastCompleted) return a.name.localeCompare(b.name);
-    return new Date(a.lastCompleted) - new Date(b.lastCompleted);
+    const ua = urgencyScore(a);
+    const ub = urgencyScore(b);
+    if (ua === ub) return a.name.localeCompare(b.name);
+    return ub - ua; // higher urgency first (but Infinity sorts first naturally)
   });
 
   container.innerHTML = dueExercises.map(ex => {
@@ -216,7 +230,7 @@ function renderExerciseList() {
         <div class="play-icon" onclick="playVideo('${ex.id}')">&#9654;</div>
         <div class="info" onclick="playVideo('${ex.id}')">
           <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${pausedBadge}</div>
-          <div class="detail">Rest: ${ex.restDays} day${ex.restDays !== 1 ? 's' : ''} &middot; <span style="${statusColor}">${statusText}</span></div>
+          <div class="detail">${frequencyLabel(ex.restDays)} &middot; <span style="${statusColor}">${statusText}</span></div>
         </div>
         <button class="edit-icon" onclick="openEditExercise('${ex.id}')" title="Edit">&#9998;</button>
       </div>
@@ -252,7 +266,6 @@ function renderPlan() {
     lines.push(`${i + 1}. ${ex.name}`);
     lines.push(`   Location: ${locationLabel(ex.location || 'both')}`);
     lines.push(`   Frequency: ${freq}`);
-    lines.push(`   Rest between sessions: ${ex.restDays} day${ex.restDays !== 1 ? 's' : ''}`);
 
     if (ex.lastCompleted) {
       const d = new Date(ex.lastCompleted);
