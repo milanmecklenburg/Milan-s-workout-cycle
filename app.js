@@ -161,14 +161,24 @@ function urgencyScore(exercise) {
   return days / cycleLength;
 }
 
+// Count completions in past N days from history
+function completionsInDays(exercise, days) {
+  if (!exercise.completionHistory || exercise.completionHistory.length === 0) return 0;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return exercise.completionHistory.filter(d => new Date(d) >= cutoff).length;
+}
+
 // ---- Render: Due List (To Do tab) ----
 function renderDueList() {
   const container = document.getElementById('due-list');
   const emptyMsg = document.getElementById('all-done');
 
-  const dueExercises = exercises.filter(e => !e.paused && isDue(e) && matchesLocationFilter(e));
+  const activeFiltered = exercises.filter(e => !e.paused && matchesLocationFilter(e));
+  const dueExercises = activeFiltered.filter(e => isDue(e));
+  const notDueExercises = activeFiltered.filter(e => !isDue(e));
 
-  if (dueExercises.length === 0) {
+  if (activeFiltered.length === 0) {
     container.innerHTML = '';
     emptyMsg.style.display = 'block';
     return;
@@ -176,40 +186,58 @@ function renderDueList() {
 
   emptyMsg.style.display = 'none';
 
-  // Sort by urgency: days since last completed / cycle length (descending)
+  // Sort due by urgency (descending)
   dueExercises.sort((a, b) => {
     const ua = urgencyScore(a);
     const ub = urgencyScore(b);
     if (ua === ub) return a.name.localeCompare(b.name);
-    return ub - ua; // higher urgency first (but Infinity sorts first naturally)
+    return ub - ua;
   });
 
-  container.innerHTML = dueExercises.map(ex => {
+  // Sort not-due by days until due (ascending)
+  notDueExercises.sort((a, b) => daysUntilDue(a) - daysUntilDue(b) || a.name.localeCompare(b.name));
+
+  function renderCard(ex, isDueNow) {
     const days = daysSinceCompleted(ex);
     let detail;
-    if (days === null) {
-      detail = 'Never done — start today!';
-    } else {
-      const overdueDays = days - ex.restDays;
-      if (overdueDays > 1) {
-        detail = `${overdueDays} days overdue`;
+    if (isDueNow) {
+      if (days === null) {
+        detail = 'Never done — start today!';
       } else {
-        detail = 'Due today';
+        const overdueDays = days - ex.restDays;
+        detail = overdueDays > 1 ? `${overdueDays} days overdue` : 'Due today';
       }
+    } else {
+      const remaining = daysUntilDue(ex);
+      detail = `Due in ${remaining} day${remaining !== 1 ? 's' : ''}`;
     }
-    const overdueClass = days !== null && (days - ex.restDays) > 1 ? 'overdue' : '';
+    const overdueClass = isDueNow && days !== null && (days - ex.restDays) > 1 ? 'overdue' : '';
+    const notDueClass = isDueNow ? '' : 'not-due';
     const loc = ex.location || 'both';
+    const skipBtn = isDueNow ? `<button class="skip-btn" onclick="skipExercise('${ex.id}', this)" title="Skip (reset timer)">&#8631;</button>` : '';
     return `
-      <div class="exercise-card ${overdueClass}" data-id="${ex.id}">
+      <div class="exercise-card ${overdueClass} ${notDueClass}" data-id="${ex.id}">
         <div class="play-icon" onclick="playVideo('${ex.id}')">&#9654;</div>
         <div class="info" onclick="playVideo('${ex.id}')">
           <div class="name">${escapeHtml(ex.name)} <span class="location-badge ${loc}">${locationLabel(loc)}</span>${typeBadgeHtml(ex.exerciseType)}${bodypartBadgeHtml(ex.bodyPart)}</div>
           <div class="detail">${detail}</div>
         </div>
+        ${skipBtn}
         <button class="check-btn" onclick="markDone('${ex.id}', this)" title="Mark as done">&#10003;</button>
       </div>
     `;
-  }).join('');
+  }
+
+  let html = dueExercises.map(ex => renderCard(ex, true)).join('');
+
+  if (notDueExercises.length > 0) {
+    if (dueExercises.length > 0) {
+      html += '<div class="section-divider">Not yet due</div>';
+    }
+    html += notDueExercises.map(ex => renderCard(ex, false)).join('');
+  }
+
+  container.innerHTML = html;
 }
 
 // ---- Render: Exercise List (Exercises tab) ----
@@ -286,6 +314,7 @@ function renderPlan() {
     lines.push(`${i + 1}. ${ex.name}`);
     lines.push(`   Location: ${locationLabel(ex.location || 'both')}`);
     lines.push(`   Frequency: ${freq}`);
+    lines.push(`   Done: ${completionsInDays(ex, 7)}x in past 7 days, ${completionsInDays(ex, 28)}x in past 28 days`);
 
     if (ex.lastCompleted) {
       const d = new Date(ex.lastCompleted);
@@ -300,7 +329,7 @@ function renderPlan() {
   const bodyPartOrder = ['legs', 'upper', 'core', ''];
   const bodyPartNames = { legs: 'LEGS', upper: 'UPPER BODY', core: 'CORE', '': 'UNASSIGNED' };
   const typeOrder = ['workout', 'stretch', ''];
-  const typeNames = { workout: 'Workouts', stretch: 'Cooldown', '': 'Unset timing' };
+  const typeNames = { workout: 'Workout', stretch: 'Cooldown', '': 'Unset timing' };
 
   lines.push('ACTIVE EXERCISES');
   lines.push('='.repeat(35));
@@ -354,6 +383,24 @@ async function markDone(id, btn) {
 
   // Brief visual feedback before removing
   setTimeout(async () => {
+    const now = new Date().toISOString();
+    ex.lastCompleted = now;
+    if (!ex.completionHistory) ex.completionHistory = [];
+    ex.completionHistory.push(now);
+    await dbPut('exercises', ex);
+    renderDueList();
+  }, 400);
+}
+
+// ---- Skip (reset timer without marking done) ----
+async function skipExercise(id, btn) {
+  const ex = exercises.find(e => e.id === id);
+  if (!ex) return;
+
+  btn.classList.add('checked');
+
+  setTimeout(async () => {
+    // Set lastCompleted to now so the rest timer resets, but don't add to history
     ex.lastCompleted = new Date().toISOString();
     await dbPut('exercises', ex);
     renderDueList();

@@ -233,6 +233,45 @@ body {
   font-weight: 500;
 }
 
+/* Not-yet-due cards */
+.exercise-card.not-due {
+  opacity: 0.6;
+}
+
+/* Skip button */
+.skip-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--text-secondary);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.skip-btn:active,
+.skip-btn.checked {
+  background: var(--text-secondary);
+  color: var(--card);
+}
+
+/* Section divider */
+.section-divider {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 0 4px;
+}
+
 /* Location filter */
 .location-filter {
   display: flex;
