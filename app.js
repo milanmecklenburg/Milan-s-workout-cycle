@@ -619,19 +619,53 @@ document.getElementById('share-plan-btn').addEventListener('click', () => {
 });
 
 // ---- Data Export / Import ----
-document.getElementById('export-btn').addEventListener('click', () => {
-  const exportData = exercises.map(ex => {
-    const { videoBlob, ...rest } = ex;
-    return rest;
+function blobToBase64(blob) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
   });
-  const json = JSON.stringify(exportData, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `workout-cycle-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+}
+
+function base64ToBlob(dataUrl) {
+  const [header, data] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const bytes = atob(data);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+document.getElementById('export-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('export-btn');
+  btn.textContent = 'Exporting...';
+  btn.disabled = true;
+
+  try {
+    const exportData = [];
+    for (const ex of exercises) {
+      const entry = { ...ex };
+      if (ex.videoBlob) {
+        entry.videoBase64 = await blobToBase64(ex.videoBlob);
+      }
+      delete entry.videoBlob;
+      exportData.push(entry);
+    }
+
+    const json = JSON.stringify(exportData);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workout-cycle-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Export failed: ' + err.message);
+  }
+
+  btn.textContent = 'Export Data';
+  btn.disabled = false;
 });
 
 document.getElementById('import-btn').addEventListener('click', () => {
@@ -656,13 +690,20 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
     }
 
     for (const ex of importedData) {
+      // Restore video blob from base64 if present
+      if (ex.videoBase64) {
+        ex.videoBlob = base64ToBlob(ex.videoBase64);
+        delete ex.videoBase64;
+      }
+
       const existing = exercises.find(e => e.id === ex.id);
       if (existing) {
-        // Preserve video blob from existing, update everything else
-        Object.assign(existing, ex, { videoBlob: existing.videoBlob });
+        // If import has a video, use it; otherwise keep existing
+        const videoBlob = ex.videoBlob || existing.videoBlob;
+        Object.assign(existing, ex, { videoBlob });
         await dbPut('exercises', existing);
       } else {
-        ex.videoBlob = null;
+        if (!ex.videoBlob) ex.videoBlob = null;
         exercises.push(ex);
         await dbPut('exercises', ex);
       }
