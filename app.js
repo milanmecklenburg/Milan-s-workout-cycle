@@ -2,7 +2,7 @@
 // Workout Cycle - PWA App
 // ==========================================
 
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.7';
 const DB_NAME = 'physio-workouts';
 const DB_VERSION = 1;
 let db;
@@ -301,7 +301,7 @@ function renderPlan() {
   const pausedExercises = sorted.filter(e => e.paused);
   const lines = [];
 
-  lines.push('MY PHYSIOTHERAPY WORKOUT PLAN');
+  lines.push('MY WORKOUT PLAN');
   lines.push('Generated: ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }));
   lines.push('');
 
