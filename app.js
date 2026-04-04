@@ -2,7 +2,7 @@
 // Workout Cycle - PWA App
 // ==========================================
 
-const APP_VERSION = '1.5';
+const APP_VERSION = '1.6';
 const DB_NAME = 'physio-workouts';
 const DB_VERSION = 1;
 let db;
