@@ -633,3 +633,11 @@ body {
   display: block;
   margin-top: 8px;
 }
+
+.app-version {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 24px;
+  padding-bottom: 16px;
+}

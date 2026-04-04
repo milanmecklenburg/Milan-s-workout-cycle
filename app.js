@@ -2,6 +2,7 @@
 // Workout Cycle - PWA App
 // ==========================================
 
+const APP_VERSION = '1.5';
 const DB_NAME = 'physio-workouts';
 const DB_VERSION = 1;
 let db;
@@ -557,26 +558,48 @@ document.getElementById('save-exercise-btn').addEventListener('click', async () 
   // Handle video file
   if (fileInput.files.length > 0) {
     const file = fileInput.files[0];
-    exercise.videoBlob = file;
     exercise.videoName = file.name;
 
-    // Store as blob in IndexedDB
-    const reader = new FileReader();
-    reader.onload = async () => {
-      exercise.videoBlob = new Blob([reader.result], { type: file.type });
+    // Show compressing status
+    const saveBtn = document.getElementById('save-exercise-btn');
+    const origText = saveBtn.textContent;
+    saveBtn.textContent = 'Compressing video...';
+    saveBtn.disabled = true;
+
+    closeExerciseModal();
+
+    try {
+      const originalMB = (file.size / 1024 / 1024).toFixed(1);
+      const compressed = await compressVideo(file);
+      const compressedMB = (compressed.size / 1024 / 1024).toFixed(1);
+      console.log(`Video: ${originalMB}MB → ${compressedMB}MB`);
+
+      // Use compressed version if smaller, otherwise keep original
+      if (compressed.size < file.size) {
+        exercise.videoBlob = compressed;
+        exercise.videoType = compressed.type;
+      } else {
+        exercise.videoBlob = new Blob([await file.arrayBuffer()], { type: file.type });
+        exercise.videoType = file.type;
+      }
+    } catch (err) {
+      console.warn('Compression failed, storing original:', err);
+      exercise.videoBlob = new Blob([await file.arrayBuffer()], { type: file.type });
       exercise.videoType = file.type;
-      await dbPut('exercises', exercise);
-      renderExerciseList();
-      renderDueList();
-    };
-    reader.readAsArrayBuffer(file);
+    }
+
+    saveBtn.textContent = origText;
+    saveBtn.disabled = false;
+
+    await dbPut('exercises', exercise);
+    renderExerciseList();
+    renderDueList();
   } else {
     await dbPut('exercises', exercise);
+    closeExerciseModal();
+    renderExerciseList();
+    renderDueList();
   }
-
-  closeExerciseModal();
-  renderExerciseList();
-  renderDueList();
 });
 
 // Delete exercise
@@ -617,6 +640,74 @@ document.getElementById('share-plan-btn').addEventListener('click', () => {
     navigator.clipboard.writeText(text).then(() => alert('Plan copied to clipboard!'));
   }
 });
+
+// ---- Video Compression ----
+function compressVideo(file, targetHeight = 480, videoBitrate = 1000000) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    const url = URL.createObjectURL(file);
+    video.src = url;
+
+    video.onloadedmetadata = () => {
+      // Calculate scaled dimensions
+      const scale = Math.min(1, targetHeight / video.videoHeight);
+      const width = Math.round(video.videoWidth * scale / 2) * 2; // even numbers for codec
+      const height = Math.round(video.videoHeight * scale / 2) * 2;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      // Check if MediaRecorder supports webm
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+        ? 'video/webm;codecs=vp8'
+        : MediaRecorder.isTypeSupported('video/webm')
+          ? 'video/webm'
+          : 'video/mp4';
+
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: videoBitrate
+      });
+
+      const chunks = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        URL.revokeObjectURL(url);
+        const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+        resolve(blob);
+      };
+      recorder.onerror = (e) => {
+        URL.revokeObjectURL(url);
+        reject(e);
+      };
+
+      video.onended = () => {
+        // Draw one last frame then stop
+        setTimeout(() => recorder.stop(), 100);
+      };
+
+      recorder.start();
+      video.play().then(() => {
+        function drawFrame() {
+          if (video.ended || video.paused) return;
+          ctx.drawImage(video, 0, 0, width, height);
+          requestAnimationFrame(drawFrame);
+        }
+        drawFrame();
+      }).catch(reject);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not load video'));
+    };
+  });
+}
 
 // ---- Data Export / Import ----
 function blobToBase64(blob) {
@@ -733,6 +824,7 @@ async function init() {
   exercises = await dbGetAll('exercises');
   renderDueList();
   renderExerciseList();
+  document.getElementById('app-version').textContent = `Workout Cycle v${APP_VERSION}`;
 }
 
 init();
