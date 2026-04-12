@@ -2,7 +2,7 @@
 // Workout Cycle - PWA App
 // ==========================================
 
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 const DB_NAME = 'physio-workouts';
 const DB_VERSION = 1;
 let db;
@@ -419,8 +419,6 @@ function playVideo(id) {
   const url = URL.createObjectURL(ex.videoBlob);
   player.src = url;
   modal.style.display = 'flex';
-
-  player.play().catch(() => {});
 }
 
 function closeVideoModal() {
@@ -645,7 +643,7 @@ document.getElementById('share-plan-btn').addEventListener('click', () => {
 function compressVideo(file, targetHeight = 480, videoBitrate = 1000000) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
-    video.muted = true;
+    video.muted = false;
     video.playsInline = true;
     const url = URL.createObjectURL(file);
     video.src = url;
@@ -668,7 +666,26 @@ function compressVideo(file, targetHeight = 480, videoBitrate = 1000000) {
           ? 'video/webm'
           : 'video/mp4';
 
-      const stream = canvas.captureStream(30);
+      const canvasStream = canvas.captureStream(30);
+
+      // Capture audio from the video element and combine with canvas video
+      let stream;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(video);
+        const dest = audioCtx.createMediaStreamDestination();
+        source.connect(dest);
+        source.connect(audioCtx.destination); // keep audio audible during compression
+        const audioTrack = dest.stream.getAudioTracks()[0];
+        if (audioTrack) {
+          canvasStream.addTrack(audioTrack);
+        }
+        stream = canvasStream;
+      } catch (e) {
+        // If audio capture fails, proceed without audio
+        stream = canvasStream;
+      }
+
       const recorder = new MediaRecorder(stream, {
         mimeType,
         videoBitsPerSecond: videoBitrate
